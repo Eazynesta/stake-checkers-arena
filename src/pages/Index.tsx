@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import Lobby from "@/components/lobby/Lobby";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -49,18 +50,18 @@ const Index = () => {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4">
-      <section className="text-center space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">Welcome to Checkers</h1>
-        <p className="text-muted-foreground">Battle opponents, stake funds, and climb the leaderboard.</p>
-        <div className="flex items-center justify-center gap-3">
-          {!session ? (
+    <main className="min-h-screen flex items-start justify-center bg-background px-4 py-8">
+      {!session ? (
+        <section className="text-center space-y-4">
+          <h1 className="text-3xl font-bold tracking-tight">Welcome to Checkers</h1>
+          <p className="text-muted-foreground">Please sign in to join the lobby.</p>
+          <div className="flex items-center justify-center gap-3">
             <Link to="/auth" className="underline underline-offset-4">Go to Login</Link>
-          ) : (
-            <Button variant="secondary" onClick={handleLogout}>Logout</Button>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      ) : (
+        <Lobby session={session} onLogout={handleLogout} />
+      )}
     </main>
   );
 };
