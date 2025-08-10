@@ -159,7 +159,7 @@ export default function GameRoom() {
       return;
     }
 
-    // Attempt simple diagonal step (no captures, no kings for MVP)
+    // Attempt move: simple step or capture (no kings, no forced captures)
     const from = selected;
     const piece = board[from.r][from.c];
     if (!piece) {
@@ -169,12 +169,36 @@ export default function GameRoom() {
 
     const dr = r - from.r;
     const dc = c - from.c;
-    const isDiag = Math.abs(dr) === 1 && Math.abs(dc) === 1;
-    const forwardOk = piece.color === "black" ? dr === 1 : dr === -1;
-    if (isDiag && forwardOk && board[r][c] === null) {
-      const nextBoard = board.map((row) => row.slice());
+    const absDr = Math.abs(dr);
+    const absDc = Math.abs(dc);
+    const destEmpty = board[r][c] === null;
+
+    // Forward-only moves for men
+    const forwardStepOk = piece.color === "black" ? dr === 1 : dr === -1;
+
+    let didMove = false;
+    const nextBoard = board.map((row) => row.slice());
+
+    // Simple diagonal step
+    if (absDr === 1 && absDc === 1 && forwardStepOk && destEmpty) {
       nextBoard[r][c] = piece;
       nextBoard[from.r][from.c] = null;
+      didMove = true;
+    } else if (absDr === 2 && absDc === 2 && destEmpty) {
+      // Capture: jump over opponent piece
+      const mr = from.r + dr / 2;
+      const mc = from.c + dc / 2;
+      const mid = board[mr][mc];
+      const forwardCaptureOk = piece.color === "black" ? dr === 2 : dr === -2;
+      if (mid && mid.color !== piece.color && forwardCaptureOk) {
+        nextBoard[r][c] = piece;
+        nextBoard[from.r][from.c] = null;
+        nextBoard[mr][mc] = null; // remove captured piece
+        didMove = true;
+      }
+    }
+
+    if (didMove) {
       const nextTurn: Color = turn === "black" ? "red" : "black";
 
       // Switch turn and broadcast including clocks snapshot
@@ -182,6 +206,14 @@ export default function GameRoom() {
       setBoard(nextBoard);
       setTurn(nextTurn);
       setSelected(null);
+
+      // Win check: opponent has no pieces left
+      const oppHasPieces = nextBoard.some((row) => row.some((cell) => cell?.color === nextTurn));
+      if (!oppHasPieces) {
+        const winner = turn === "black" ? "Black" : "Red";
+        setGameOver(`${winner} wins by capture`);
+        toast.success(`${winner} wins by capture`);
+      }
 
       channelRef.current?.send({ type: "broadcast", event: "move", payload: { board: nextBoard, turn: nextTurn, clocks: nextClocks } });
     } else {
