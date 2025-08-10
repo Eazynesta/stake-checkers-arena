@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 type Color = "black" | "red";
 
@@ -34,6 +34,8 @@ function createInitialBoard(): Board {
 export default function GameRoom() {
   const { id: gameId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const stake = useMemo(() => Number(searchParams.get("stake") ?? 0), [searchParams]);
 
   const [session, setSession] = useState<Session | null>(null);
   const [players, setPlayers] = useState<string[]>([]); // user ids
@@ -45,6 +47,7 @@ export default function GameRoom() {
   const [gameOver, setGameOver] = useState<string | null>(null);
 
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const endedRef = useRef(false);
 
   const me = useMemo(() => ({ id: session?.user.id ?? "", email: session?.user.email ?? "" }), [session]);
 
@@ -106,6 +109,10 @@ export default function GameRoom() {
         setClocks(clocks);
         setTurn(turn);
       })
+      .on("broadcast", { event: "game_over" }, ({ payload }) => {
+        const { winnerId, stake: s } = payload as { winnerId: string; stake: number };
+        handleGameOver(winnerId, s);
+      })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           await channel.track({ email: me.email });
@@ -138,6 +145,11 @@ export default function GameRoom() {
         // End by time
         if (next.black === 0 || next.red === 0) {
           const loser = next.black === 0 ? "Black" : "Red";
+          const winnerId = next.black === 0 ? players[1] : players[0];
+          if (!endedRef.current && winnerId) {
+            endedRef.current = true;
+            channelRef.current?.send({ type: "broadcast", event: "game_over", payload: { gameId, winnerId, stake } });
+          }
           setGameOver(`${loser} ran out of time`);
           toast.error(`${loser} lost on time`);
         }
@@ -210,15 +222,49 @@ export default function GameRoom() {
       // Win check: opponent has no pieces left
       const oppHasPieces = nextBoard.some((row) => row.some((cell) => cell?.color === nextTurn));
       if (!oppHasPieces) {
-        const winner = turn === "black" ? "Black" : "Red";
-        setGameOver(`${winner} wins by capture`);
-        toast.success(`${winner} wins by capture`);
+        const winnerColor = turn; // the player who just moved
+        const winnerLabel = winnerColor === "black" ? "Black" : "Red";
+        const winnerId = winnerColor === "black" ? players[0] : players[1];
+        if (!endedRef.current && winnerId) {
+          endedRef.current = true;
+          channelRef.current?.send({ type: "broadcast", event: "game_over", payload: { gameId, winnerId, stake } });
+        }
+        setGameOver(`${winnerLabel} wins by capture`);
+        toast.success(`${winnerLabel} wins by capture`);
       }
 
       channelRef.current?.send({ type: "broadcast", event: "move", payload: { board: nextBoard, turn: nextTurn, clocks: nextClocks } });
     } else {
       // Invalid — just reset selection
       setSelected(null);
+    }
+  };
+
+  const handleGameOver = async (winnerId: string, s: number) => {
+    if (!gameId) return;
+    // Idempotent per-user payout
+    const payoutKey = `game_${gameId}_payout_${me.id}`;
+    if (localStorage.getItem(payoutKey)) return;
+
+    const total = Number((s * 2).toFixed(2));
+    const companyCut = Number((total * 0.2).toFixed(2));
+    const winnerAmount = Number((total * 0.8).toFixed(2));
+
+    try {
+      if (me.id === winnerId) {
+        await supabase.rpc("credit_balance", { amount: winnerAmount });
+        await supabase.rpc("increment_stat", { result: "win", stake: s });
+        const companyKey = `company_recorded_${gameId}`;
+        if (!localStorage.getItem(companyKey)) {
+          await supabase.rpc("record_company_earning", { amount: companyCut, source_game: gameId });
+          localStorage.setItem(companyKey, "1");
+        }
+      } else if (me.id) {
+        await supabase.rpc("increment_stat", { result: "loss", stake: s });
+      }
+      localStorage.setItem(payoutKey, "1");
+    } catch (e) {
+      // noop, UI is best-effort here
     }
   };
 
