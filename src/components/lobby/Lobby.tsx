@@ -26,6 +26,14 @@ interface Invite {
   at: string;
 }
 
+interface TopPlayer {
+  user_id: string;
+  username: string;
+  games_won: number;
+  games_lost: number;
+  earnings: number;
+}
+
 const Lobby = ({ session, onLogout }: LobbyProps) => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<PresenceUser[]>([]);
@@ -33,6 +41,8 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
   const [receivedInvites, setReceivedInvites] = useState<Invite[]>([]);
   const [sentInvites, setSentInvites] = useState<Invite[]>([]);
   const [balance, setBalance] = useState<number>(0);
+  const [leaders, setLeaders] = useState<TopPlayer[]>([]);
+  const [leadersLoading, setLeadersLoading] = useState<boolean>(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const me = useMemo(() => {
@@ -69,6 +79,24 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
         // ignore
       }
     })();
+  }, [me.id]);
+
+  useEffect(() => {
+    if (!me.id) return;
+    let active = true;
+    setLeadersLoading(true);
+    (supabase as any)
+      .rpc("get_top_players", { limit_count: 10 })
+      .then(({ data, error }: any) => {
+        if (!active) return;
+        if (!error) setLeaders(Array.isArray(data) ? data : []);
+      })
+      .finally(() => {
+        if (active) setLeadersLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [me.id]);
 
   useEffect(() => {
@@ -162,19 +190,51 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
     }
   };
 
+  const isOnline = (id: string) => users.some((u) => u.id === id);
+  const inviteById = (id: string) => {
+    const target = users.find((u) => u.id === id);
+    if (target) return sendInvite(target);
+    toast.info("This player is currently offline");
+  };
+
   const acceptInvite = async (inv: Invite) => {
     if (!channelRef.current) return;
     if (balance < inv.stake) {
       toast.error("Your balance is too low to accept this match");
       return;
     }
+
+    // Notify inviter
     const ok = await channelRef.current.send({
       type: "broadcast",
       event: "accept",
       payload: { gameId: inv.gameId, from: inv.from, to: me.id, stake: inv.stake },
     });
+
     if (ok) {
       setReceivedInvites((prev) => prev.filter((i) => i.gameId !== inv.gameId));
+
+      // Important: the sender of a broadcast does NOT receive their own event.
+      // So we must debit and navigate locally for the acceptor as well.
+      const key = `game_debited_${inv.gameId}_${me.id}`;
+      if (!localStorage.getItem(key)) {
+        try {
+          const { data, error } = await (supabase as any).rpc("debit_balance", { amount: inv.stake });
+          if (error || data !== true) {
+            toast.error("Balance debit failed. Please check your balance.");
+            return;
+          }
+          setBalance((b) => Math.max(0, Number((b - inv.stake).toFixed(2))));
+          localStorage.setItem(key, "1");
+        } catch (_) {
+          toast.error("Balance debit failed. Try again.");
+          return;
+        }
+      }
+      // Navigate acceptor into the game immediately
+      navigate(`/game/${inv.gameId}?stake=${encodeURIComponent(inv.stake)}`);
+    } else {
+      toast.error("Failed to accept invite");
     }
   };
 
@@ -195,6 +255,7 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => navigate('/dashboard')}>Dashboard</Button>
+          <Button variant="outline" onClick={() => navigate('/admin')}>Admin</Button>
           <Button variant="secondary" onClick={onLogout}>Logout</Button>
         </div>
       </header>
@@ -247,6 +308,40 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">Leaderboard</h2>
+        <div className="rounded-md border border-border overflow-hidden">
+          <div className="px-3 py-2 bg-card/50 font-medium flex items-center justify-between">
+            <span>Top players</span>
+            {leadersLoading && <span className="text-xs text-muted-foreground">Refreshing…</span>}
+          </div>
+          {leaders.length === 0 ? (
+            <p className="text-sm text-muted-foreground p-3">No data yet.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {leaders.map((p, idx) => {
+                const online = isOnline(p.user_id);
+                return (
+                  <li key={p.user_id} className="p-3 flex items-center justify-between bg-card/50">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground w-5">#{idx + 1}</span>
+                      <div>
+                        <p className="font-medium">{p.username || 'Player'}</p>
+                        <p className="text-xs text-muted-foreground">Wins: {p.games_won} · Earnings: {Number(p.earnings).toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs ${online ? 'text-foreground' : 'text-muted-foreground'}`}>{online ? 'Online' : 'Offline'}</span>
+                      <Button size="sm" onClick={() => inviteById(p.user_id)} disabled={!online}>Invite</Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">

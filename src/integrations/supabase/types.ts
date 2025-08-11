@@ -81,6 +81,23 @@ export type Database = {
         Args: { amount: number }
         Returns: boolean
       }
+      get_earnings_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          period: string
+          total: number
+        }[]
+      }
+      get_top_players: {
+        Args: { limit_count?: number }
+        Returns: {
+          user_id: string
+          username: string
+          games_won: number
+          games_lost: number
+          earnings: number
+        }[]
+      }
       increment_stat: {
         Args: { result: string; stake: number }
         Returns: undefined
