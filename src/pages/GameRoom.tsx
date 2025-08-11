@@ -252,15 +252,15 @@ export default function GameRoom() {
 
     try {
       if (me.id === winnerId) {
-        await supabase.rpc("credit_balance", { amount: winnerAmount });
-        await supabase.rpc("increment_stat", { result: "win", stake: s });
+        await (supabase as any).rpc("credit_balance", { amount: winnerAmount });
+        await (supabase as any).rpc("increment_stat", { result: "win", stake: s });
         const companyKey = `company_recorded_${gameId}`;
         if (!localStorage.getItem(companyKey)) {
-          await supabase.rpc("record_company_earning", { amount: companyCut, source_game: gameId });
+          await (supabase as any).rpc("record_company_earning", { amount: companyCut, source_game: gameId });
           localStorage.setItem(companyKey, "1");
         }
       } else if (me.id) {
-        await supabase.rpc("increment_stat", { result: "loss", stake: s });
+        await (supabase as any).rpc("increment_stat", { result: "loss", stake: s });
       }
       localStorage.setItem(payoutKey, "1");
     } catch (e) {

@@ -49,14 +49,16 @@ export default function Dashboard() {
 
   const loadProfile = async () => {
     if (!me.id) return;
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("profiles")
       .select("username, balance, games_won, games_lost, earnings")
       .eq("id", me.id)
       .maybeSingle();
     if (error || !data) {
-      await supabase.from("profiles").insert({ id: me.id, username: me.email.split("@")[0] }).catch(() => {});
-      const { data: d2 } = await supabase
+      try {
+        await (supabase as any).from("profiles").insert({ id: me.id, username: me.email.split("@")[0] });
+      } catch (_) {}
+      const { data: d2 } = await (supabase as any)
         .from("profiles")
         .select("username, balance, games_won, games_lost, earnings")
         .eq("id", me.id)
@@ -82,7 +84,7 @@ export default function Dashboard() {
 
   const saveUsername = async () => {
     if (!username.trim()) return;
-    const { error } = await supabase.from("profiles").update({ username }).eq("id", me.id);
+    const { error } = await (supabase as any).from("profiles").update({ username }).eq("id", me.id);
     if (error) toast.error("Failed to update username");
     else {
       toast.success("Username updated");
@@ -92,7 +94,7 @@ export default function Dashboard() {
 
   const deposit = async () => {
     if (!amount || amount <= 0) return toast.error("Enter a valid amount");
-    const { error } = await supabase.rpc("credit_balance", { amount });
+    const { error } = await (supabase as any).rpc("credit_balance", { amount });
     if (error) return toast.error("Deposit failed");
     toast.success("Deposited");
     loadProfile();
@@ -100,7 +102,7 @@ export default function Dashboard() {
 
   const withdraw = async () => {
     if (!amount || amount <= 0) return toast.error("Enter a valid amount");
-    const { data, error } = await supabase.rpc("debit_balance", { amount });
+    const { data, error } = await (supabase as any).rpc("debit_balance", { amount });
     if (error || data !== true) return toast.error("Insufficient balance");
     toast.success("Withdrawn");
     loadProfile();

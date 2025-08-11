@@ -104,7 +104,7 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
         if (from === me.id || to === me.id) {
           const key = `game_debited_${gameId}_${me.id}`;
           if (!localStorage.getItem(key)) {
-            supabase.rpc("debit_balance", { amount: stake }).then(({ data, error }) => {
+            (supabase as any).rpc("debit_balance", { amount: stake }).then(({ data, error }) => {
               if (error || data !== true) {
                 toast.error("Balance debit failed. Please check your balance.");
               } else {
