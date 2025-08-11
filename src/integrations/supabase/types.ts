@@ -14,13 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      company_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          source_game: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          source_game?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          source_game?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          balance: number
+          created_at: string
+          earnings: number
+          games_lost: number
+          games_won: number
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          earnings?: number
+          games_lost?: number
+          games_won?: number
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          earnings?: number
+          games_lost?: number
+          games_won?: number
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      credit_balance: {
+        Args: { amount: number }
+        Returns: undefined
+      }
+      debit_balance: {
+        Args: { amount: number }
+        Returns: boolean
+      }
+      increment_stat: {
+        Args: { result: string; stake: number }
+        Returns: undefined
+      }
+      record_company_earning: {
+        Args: { amount: number; source_game: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
