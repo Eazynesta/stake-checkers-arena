@@ -43,6 +43,7 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
   const [balance, setBalance] = useState<number>(0);
   const [leaders, setLeaders] = useState<TopPlayer[]>([]);
   const [leadersLoading, setLeadersLoading] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const me = useMemo(() => {
@@ -97,6 +98,13 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
     return () => {
       active = false;
     };
+  }, [me.id]);
+
+  useEffect(() => {
+    if (!me.id) return;
+    (supabase as any).rpc('has_role', { _user_id: me.id, _role: 'admin' }).then(({ data }: any) => {
+      setIsAdmin(!!data);
+    }).catch(() => setIsAdmin(false));
   }, [me.id]);
 
   useEffect(() => {
@@ -157,6 +165,22 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
       }
     };
   }, [me, navigate]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      // Refresh leaderboard
+      setLeadersLoading(true);
+      (supabase as any).rpc('get_top_players', { limit_count: 10 }).then(({ data }: any) => {
+        setLeaders(Array.isArray(data) ? data : []);
+      }).finally(() => setLeadersLoading(false));
+      // Nudge presence tracking
+      if (channelRef.current) {
+        channelRef.current.track({ email: me.email, online_at: new Date().toISOString() });
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [me.email]);
 
   const sendInvite = async (target: PresenceUser) => {
     if (!channelRef.current) return;
@@ -255,7 +279,7 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => navigate('/dashboard')}>Dashboard</Button>
-          <Button variant="outline" onClick={() => navigate('/admin')}>Admin</Button>
+          {isAdmin && <Button variant="outline" onClick={() => navigate('/admin')}>Admin</Button>}
           <Button variant="secondary" onClick={onLogout}>Logout</Button>
         </div>
       </header>

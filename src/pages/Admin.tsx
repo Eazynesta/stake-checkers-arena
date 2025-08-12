@@ -21,6 +21,7 @@ export default function Admin() {
   const [summary, setSummary] = useState<Record<string, number>>({ day: 0, week: 0, month: 0 });
   const [leaders, setLeaders] = useState<TopPlayer[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const me = useMemo(() => ({ id: session?.user.id ?? "", email: session?.user.email ?? "" }), [session]);
 

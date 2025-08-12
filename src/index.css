@@ -53,6 +53,12 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Casino theme tokens */
+    --board-dark: 140 40% 20%;
+    --board-light: 140 35% 30%;
+    --piece-red: 0 75% 50%;
+    --piece-black: 0 0% 10%;
   }
 
   .dark {
@@ -91,6 +97,12 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Casino theme tokens (dark) */
+    --board-dark: 140 40% 18%;
+    --board-light: 140 30% 28%;
+    --piece-red: 0 75% 50%;
+    --piece-black: 0 0% 12%;
   }
 }
 
@@ -102,4 +114,13 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  .bg-board-dark { background-color: hsl(var(--board-dark)); }
+  .bg-board-light { background-color: hsl(var(--board-light)); }
+  .bg-piece-red { background-color: hsl(var(--piece-red)); }
+  .bg-piece-black { background-color: hsl(var(--piece-black)); }
+  .text-piece-red { color: hsl(var(--piece-red)); }
+  .text-piece-black { color: hsl(var(--piece-black)); }
 }

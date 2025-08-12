@@ -12,7 +12,7 @@ type Cell = { color: Color; king?: boolean } | null;
 type Board = Cell[][]; // 8x8
 
 const BOARD_SIZE = 8;
-const START_TIME = 300; // 5 minutes in seconds
+const START_TIME = 120; // 2 minutes per turn
 
 function createInitialBoard(): Board {
   const board: Board = Array.from({ length: BOARD_SIZE }, () => Array<Cell>(BOARD_SIZE).fill(null));
@@ -45,6 +45,7 @@ export default function GameRoom() {
   const [clocks, setClocks] = useState<{ black: number; red: number }>({ black: START_TIME, red: START_TIME });
   const [selected, setSelected] = useState<{ r: number; c: number } | null>(null);
   const [gameOver, setGameOver] = useState<string | null>(null);
+  const [usernames, setUsernames] = useState<Record<string, string>>({});
 
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const endedRef = useRef(false);
@@ -53,8 +54,8 @@ export default function GameRoom() {
 
   // SEO basics
   useEffect(() => {
-    document.title = "Checkers Game | 5-min Timer";
-    const description = "Play a 5-minute checkers match with realtime sync.";
+    document.title = "Checkers Game | 2-min Turn Timer";
+    const description = "Play checkers with 2-minute-per-move clocks and realtime sync.";
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement("meta");
@@ -127,6 +128,22 @@ export default function GameRoom() {
     };
   }, [gameId, me]);
 
+  // Fetch usernames for players list
+  useEffect(() => {
+    if (!players.length) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('id, username')
+        .in('id', players);
+      const map: Record<string, string> = {};
+      (data || []).forEach((r: any) => {
+        map[r.id] = r.username || 'Player';
+      });
+      setUsernames(map);
+    })();
+  }, [players]);
+
   // Host clock tick (player[0])
   useEffect(() => {
     if (!players.length) return;
@@ -171,7 +188,7 @@ export default function GameRoom() {
       return;
     }
 
-    // Attempt move: simple step or capture (no kings, no forced captures)
+    // Attempt move: simple step or capture (kings supported, no forced captures)
     const from = selected;
     const piece = board[from.r][from.c];
     if (!piece) {
@@ -185,25 +202,28 @@ export default function GameRoom() {
     const absDc = Math.abs(dc);
     const destEmpty = board[r][c] === null;
 
-    // Forward-only moves for men
-    const forwardStepOk = piece.color === "black" ? dr === 1 : dr === -1;
+    const isForwardForMan = piece.color === "black" ? dr === 1 : dr === -1;
+    const isForwardForCapture = piece.color === "black" ? dr === 2 : dr === -2;
 
     let didMove = false;
     const nextBoard = board.map((row) => row.slice());
 
-    // Simple diagonal step
-    if (absDr === 1 && absDc === 1 && forwardStepOk && destEmpty) {
-      nextBoard[r][c] = piece;
+    // Simple diagonal step (1)
+    const stepDirOk = piece.king ? absDr === 1 : (absDr === 1 && isForwardForMan);
+    if (stepDirOk && absDc === 1 && destEmpty) {
+      const moved: Exclude<Cell, null> = { color: piece.color, king: piece.king };
+      nextBoard[r][c] = moved;
       nextBoard[from.r][from.c] = null;
       didMove = true;
     } else if (absDr === 2 && absDc === 2 && destEmpty) {
-      // Capture: jump over opponent piece
+      // Capture: jump over opponent piece (2)
       const mr = from.r + dr / 2;
       const mc = from.c + dc / 2;
       const mid = board[mr][mc];
-      const forwardCaptureOk = piece.color === "black" ? dr === 2 : dr === -2;
-      if (mid && mid.color !== piece.color && forwardCaptureOk) {
-        nextBoard[r][c] = piece;
+      const captureDirOk = piece.king ? true : isForwardForCapture;
+      if (mid && mid.color !== piece.color && captureDirOk) {
+        const moved: Exclude<Cell, null> = { color: piece.color, king: piece.king };
+        nextBoard[r][c] = moved;
         nextBoard[from.r][from.c] = null;
         nextBoard[mr][mc] = null; // remove captured piece
         didMove = true;
@@ -211,10 +231,18 @@ export default function GameRoom() {
     }
 
     if (didMove) {
+      // Promotion to king
+      const moved = nextBoard[r][c] as Exclude<Cell, null>;
+      if (!moved.king) {
+        if ((moved.color === "black" && r === BOARD_SIZE - 1) || (moved.color === "red" && r === 0)) {
+          moved.king = true;
+        }
+      }
+
       const nextTurn: Color = turn === "black" ? "red" : "black";
 
-      // Switch turn and broadcast including clocks snapshot
-      const nextClocks = { ...clocks };
+      // Switch turn and broadcast including clocks snapshot; reset next player's clock
+      const nextClocks = { ...clocks, [nextTurn]: START_TIME } as { black: number; red: number };
       setBoard(nextBoard);
       setTurn(nextTurn);
       setSelected(null);
@@ -268,8 +296,23 @@ export default function GameRoom() {
     }
   };
 
-  const squareBg = (r: number, c: number) => ((r + c) % 2 === 0 ? "bg-background" : "bg-accent");
-  const pieceStyle = (color: Color) => (color === "black" ? "bg-primary" : "bg-secondary");
+  const handleLeave = () => {
+    if (!players.length || !gameId) {
+      navigate('/');
+      return;
+    }
+    const confirmLeave = window.confirm('Are you sure? If you exit you will lose.');
+    if (!confirmLeave) return;
+    const winnerId = players[0] === me.id ? players[1] : players[0];
+    if (winnerId && !endedRef.current) {
+      endedRef.current = true;
+      channelRef.current?.send({ type: 'broadcast', event: 'game_over', payload: { gameId, winnerId, stake } });
+    }
+    navigate('/');
+  };
+
+  const squareBg = (r: number, c: number) => ((r + c) % 2 === 0 ? "bg-board-light" : "bg-board-dark");
+  const pieceStyle = (color: Color) => (color === "black" ? "bg-piece-black" : "bg-piece-red");
 
   return (
     <main className="min-h-screen bg-background px-4 py-8">
@@ -280,7 +323,7 @@ export default function GameRoom() {
             <p className="text-muted-foreground">Game ID: {gameId}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={() => navigate("/")}>Back to Lobby</Button>
+            <Button variant="secondary" onClick={handleLeave}>Back to Lobby</Button>
           </div>
         </header>
 
@@ -314,17 +357,22 @@ export default function GameRoom() {
           <aside className="w-full md:w-72 space-y-4">
             <div className="rounded-lg border border-border p-4 bg-card/50">
               <h2 className="font-semibold mb-2">Players</h2>
-              <ul className="text-sm text-muted-foreground space-y-1">
+              <ul className="text-sm space-y-1">
                 {players.map((id, idx) => (
-                  <li key={id}>
-                    {idx === 0 ? "Black" : idx === 1 ? "Red" : "Spectator"}: {id === me.id ? `${me.email} (You)` : id}
+                  <li key={id} className="flex items-center justify-between">
+                    <span className={idx === 0 ? 'text-piece-black' : idx === 1 ? 'text-piece-red' : ''}>
+                      {idx === 0 ? 'Black' : idx === 1 ? 'Red' : 'Spectator'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {id === me.id ? `${me.email} (You)` : (usernames[id] || id)}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div className="rounded-lg border border-border p-4 bg-card/50">
-              <h2 className="font-semibold mb-2">Clocks (5 min)</h2>
+              <h2 className="font-semibold mb-2">Clocks (2 min per move)</h2>
               <div className="flex items-center justify-between">
                 <span className={`text-sm ${turn === "black" ? "font-bold" : ""}`}>Black</span>
                 <span className="font-mono">{formatTime(clocks.black)}</span>
