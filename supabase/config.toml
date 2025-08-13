@@ -1,1 +1,16 @@
 project_id = "xznqsklwrodetxxvrcoc"
+
+[functions.mpesa-stk-push]
+verify_jwt = true
+
+[functions.mpesa-callback]
+verify_jwt = false
+
+[functions.mpesa-b2c]
+verify_jwt = true
+
+[functions.mpesa-b2c-result]
+verify_jwt = false
+
+[functions.mpesa-b2c-timeout]
+verify_jwt = false

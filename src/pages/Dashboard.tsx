@@ -17,6 +17,8 @@ export default function Dashboard() {
   const [gamesLost, setGamesLost] = useState(0);
   const [earnings, setEarnings] = useState(0);
   const [amount, setAmount] = useState<number>(10);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // SEO basics
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function Dashboard() {
     if (!me.id) return;
     const { data, error } = await (supabase as any)
       .from("profiles")
-      .select("username, balance, games_won, games_lost, earnings")
+      .select("username, balance, games_won, games_lost, earnings, phone_number")
       .eq("id", me.id)
       .maybeSingle();
     if (error || !data) {
@@ -60,7 +62,7 @@ export default function Dashboard() {
       } catch (_) {}
       const { data: d2 } = await (supabase as any)
         .from("profiles")
-        .select("username, balance, games_won, games_lost, earnings")
+        .select("username, balance, games_won, games_lost, earnings, phone_number")
         .eq("id", me.id)
         .maybeSingle();
       if (d2) applyProfile(d2);
@@ -75,6 +77,7 @@ export default function Dashboard() {
     setGamesWon(Number(p.games_won ?? 0));
     setGamesLost(Number(p.games_lost ?? 0));
     setEarnings(Number(p.earnings ?? 0));
+    setPhoneNumber(p.phone_number ?? "");
   };
 
   useEffect(() => {
@@ -82,30 +85,66 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me.id]);
 
-  const saveUsername = async () => {
+  const saveProfile = async () => {
     if (!username.trim()) return;
-    const { error } = await (supabase as any).from("profiles").update({ username }).eq("id", me.id);
-    if (error) toast.error("Failed to update username");
+    const { error } = await (supabase as any).from("profiles").update({ 
+      username,
+      phone_number: phoneNumber 
+    }).eq("id", me.id);
+    if (error) toast.error("Failed to update profile");
     else {
-      toast.success("Username updated");
+      toast.success("Profile updated");
       loadProfile();
     }
   };
 
   const deposit = async () => {
     if (!amount || amount <= 0) return toast.error("Enter a valid amount");
-    const { error } = await (supabase as any).rpc("credit_balance", { amount });
-    if (error) return toast.error("Deposit failed");
-    toast.success("Deposited");
-    loadProfile();
+    if (!phoneNumber.trim()) return toast.error("Enter your phone number");
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
+        body: { 
+          amount: amount.toString(), 
+          phone_number: phoneNumber.startsWith('+254') ? phoneNumber : `+254${phoneNumber.replace(/^0/, '')}`
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("STK Push sent! Check your phone to complete payment");
+      loadProfile();
+    } catch (error: any) {
+      toast.error(error.message || "Deposit failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const withdraw = async () => {
     if (!amount || amount <= 0) return toast.error("Enter a valid amount");
-    const { data, error } = await (supabase as any).rpc("debit_balance", { amount });
-    if (error || data !== true) return toast.error("Insufficient balance");
-    toast.success("Withdrawn");
-    loadProfile();
+    if (!phoneNumber.trim()) return toast.error("Enter your phone number");
+    if (balance < amount) return toast.error("Insufficient balance");
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mpesa-b2c', {
+        body: { 
+          amount: amount.toString(), 
+          phone_number: phoneNumber.startsWith('+254') ? phoneNumber : `+254${phoneNumber.replace(/^0/, '')}`
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Withdrawal initiated! You'll receive the money shortly");
+      loadProfile();
+    } catch (error: any) {
+      toast.error(error.message || "Withdrawal failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!session) return null;
@@ -126,24 +165,57 @@ export default function Dashboard() {
         <section className="grid md:grid-cols-2 gap-6">
           <article className="rounded-lg border border-border p-4 bg-card/50 space-y-3">
             <h2 className="font-semibold">Profile</h2>
-            <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Username</label>
-              <div className="flex items-center gap-2">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Username</label>
                 <Input value={username} onChange={(e) => setUsername(e.currentTarget.value)} />
-                <Button onClick={saveUsername}>Save</Button>
               </div>
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">Phone Number (M-Pesa)</label>
+                <Input 
+                  value={phoneNumber} 
+                  onChange={(e) => setPhoneNumber(e.currentTarget.value)}
+                  placeholder="0712345678 or +254712345678"
+                />
+              </div>
+              <Button onClick={saveProfile} disabled={loading}>Save Profile</Button>
             </div>
           </article>
 
           <article className="rounded-lg border border-border p-4 bg-card/50 space-y-3">
-            <h2 className="font-semibold">Wallet (Dummy)</h2>
-            <p className="text-sm text-muted-foreground">Balance: {balance.toFixed(2)}</p>
-            <div className="flex items-center gap-2">
-              <Input type="number" min={1} step="0.01" className="w-32" value={amount} onChange={(e) => setAmount(Number(e.currentTarget.value))} />
-              <Button onClick={deposit}>Deposit</Button>
-              <Button variant="outline" onClick={withdraw}>Withdraw</Button>
+            <h2 className="font-semibold text-casino-gold">💰 M-Pesa Wallet</h2>
+            <p className="text-lg font-bold text-casino-gold">Balance: KSh {balance.toFixed(2)}</p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Input 
+                  type="number" 
+                  min={1} 
+                  step="1" 
+                  className="w-32" 
+                  value={amount} 
+                  onChange={(e) => setAmount(Number(e.currentTarget.value))}
+                  placeholder="Amount"
+                />
+                <Button 
+                  onClick={deposit} 
+                  disabled={loading || !phoneNumber}
+                  className="bg-casino-green hover:bg-casino-green/90"
+                >
+                  {loading ? "Processing..." : "🏦 Deposit"}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={withdraw}
+                  disabled={loading || !phoneNumber || balance < amount}
+                  className="border-casino-red text-casino-red hover:bg-casino-red/10"
+                >
+                  {loading ? "Processing..." : "💸 Withdraw"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 Real M-Pesa integration (Sandbox). Add your phone number above.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">Note: No real payments. This is placeholder logic.</p>
           </article>
 
           <article className="md:col-span-2 rounded-lg border border-border p-4 bg-card/50 space-y-3">

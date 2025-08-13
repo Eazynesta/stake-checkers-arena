@@ -59,6 +59,10 @@ All colors MUST be HSL.
     --board-light: 140 35% 30%;
     --piece-red: 0 75% 50%;
     --piece-black: 0 0% 10%;
+    --casino-gold: 45 100% 50%;
+    --casino-green: 142 76% 36%;
+    --casino-red: 0 75% 50%;
+    --casino-purple: 260 100% 50%;
   }
 
   .dark {
@@ -103,6 +107,10 @@ All colors MUST be HSL.
     --board-light: 140 30% 28%;
     --piece-red: 0 75% 50%;
     --piece-black: 0 0% 12%;
+    --casino-gold: 45 100% 60%;
+    --casino-green: 142 76% 40%;
+    --casino-red: 0 75% 55%;
+    --casino-purple: 260 100% 60%;
   }
 }
 
@@ -123,4 +131,12 @@ All colors MUST be HSL.
   .bg-piece-black { background-color: hsl(var(--piece-black)); }
   .text-piece-red { color: hsl(var(--piece-red)); }
   .text-piece-black { color: hsl(var(--piece-black)); }
+  .text-casino-gold { color: hsl(var(--casino-gold)); }
+  .text-casino-green { color: hsl(var(--casino-green)); }
+  .text-casino-red { color: hsl(var(--casino-red)); }
+  .text-casino-purple { color: hsl(var(--casino-purple)); }
+  .bg-casino-gold { background-color: hsl(var(--casino-gold)); }
+  .bg-casino-green { background-color: hsl(var(--casino-green)); }
+  .bg-casino-red { background-color: hsl(var(--casino-red)); }
+  .bg-casino-purple { background-color: hsl(var(--casino-purple)); }
 }
