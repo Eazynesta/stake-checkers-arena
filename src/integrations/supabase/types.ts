@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_account: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          total_deposits: number
+          total_withdrawals: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          total_deposits?: number
+          total_withdrawals?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          total_deposits?: number
+          total_withdrawals?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_earnings: {
         Row: {
           amount: number
@@ -35,6 +62,57 @@ export type Database = {
         }
         Relationships: []
       }
+      mpesa_transactions: {
+        Row: {
+          amount: number
+          checkout_request_id: string | null
+          conversation_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          merchant_request_id: string | null
+          mpesa_receipt_number: string | null
+          originator_conversation_id: string | null
+          phone_number: string
+          status: string
+          transaction_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          checkout_request_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt_number?: string | null
+          originator_conversation_id?: string | null
+          phone_number: string
+          status?: string
+          transaction_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          checkout_request_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt_number?: string | null
+          originator_conversation_id?: string | null
+          phone_number?: string
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           balance: number
@@ -43,6 +121,7 @@ export type Database = {
           games_lost: number
           games_won: number
           id: string
+          phone_number: string | null
           updated_at: string
           username: string | null
         }
@@ -53,6 +132,7 @@ export type Database = {
           games_lost?: number
           games_won?: number
           id: string
+          phone_number?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -63,8 +143,30 @@ export type Database = {
           games_lost?: number
           games_won?: number
           id?: string
+          phone_number?: string | null
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -102,8 +204,28 @@ export type Database = {
         Args: { result: string; stake: number }
         Returns: undefined
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      process_mpesa_deposit_by_checkout: {
+        Args: { checkout_id: string; receipt_number: string }
+        Returns: boolean
+      }
+      process_mpesa_withdrawal: {
+        Args: {
+          user_id_param: string
+          amount_param: number
+          phone_param: string
+        }
+        Returns: string
+      }
       record_company_earning: {
         Args: { amount: number; source_game: string }
+        Returns: undefined
+      }
+      rollback_mpesa_withdrawal: {
+        Args: { tx: string }
         Returns: undefined
       }
     }
