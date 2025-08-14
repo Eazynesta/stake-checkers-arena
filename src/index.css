@@ -157,4 +157,11 @@ All colors MUST be HSL.
   .kick-button-secondary {
     @apply bg-secondary/80 hover:bg-secondary text-secondary-foreground border border-border/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95;
   }
+
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
 }

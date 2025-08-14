@@ -355,7 +355,7 @@ export default function GameRoom() {
           {/* Game Board */}
           <div className="flex flex-col items-center space-y-6 order-1 xl:order-2">
             <div className="glass-card p-4 rounded-xl">
-              <div className="grid grid-cols-8 gap-1 p-2 bg-secondary/20 rounded-lg max-w-[min(90vw,480px)] aspect-square">
+              <div className="grid grid-cols-8 gap-1 p-2 bg-secondary/20 rounded-lg max-w-[min(90vw,700px)] w-full aspect-square mx-auto">
                 {board.map((row, r) =>
                   row.map((cell, c) => (
                     <button
