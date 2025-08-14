@@ -311,86 +311,139 @@ export default function GameRoom() {
     navigate('/');
   };
 
-  const squareBg = (r: number, c: number) => ((r + c) % 2 === 0 ? "bg-board-light" : "bg-board-dark");
+  const squareBg = (r: number, c: number) => {
+    return (r + c) % 2 === 0 ? "bg-board-light hover:bg-board-light/80" : "bg-board-dark hover:bg-board-dark/80";
+  };
   const pieceStyle = (color: Color) => (color === "black" ? "bg-piece-black" : "bg-piece-red");
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8">
-      <section className="max-w-5xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Checkers Game</h1>
-            <p className="text-muted-foreground">Game ID: {gameId}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" onClick={handleLeave}>Back to Lobby</Button>
-          </div>
+    <main className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+            Checkers Arena
+          </h1>
+          <p className="text-muted-foreground">Match ID: {gameId}</p>
         </header>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          <article className="flex-1">
-            <div className="grid grid-cols-8 gap-1 max-w-[min(90vw,512px)] aspect-square">
-              {board.map((row, r) => (
-                <div key={r} className="contents">
-                  {row.map((cell, c) => (
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr,auto,1fr] gap-6 items-start max-w-7xl mx-auto">
+          {/* Black Player Info */}
+          <div className={`glass-card p-6 rounded-xl border-2 transition-all duration-300 order-2 xl:order-1 ${
+            turn === "black" && !gameOver ? 'border-accent shadow-lg shadow-accent/20' : 'border-border/50'
+          }`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-4 h-4 bg-piece-black rounded-full border border-white/50"></div>
+              <h3 className="font-bold text-lg text-piece-black">Black Player</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              {players[0] ? (players[0] === me.id ? `${me.email.split('@')[0]} (You)` : usernames[players[0]] || 'Player') : 'Waiting for player...'}
+            </p>
+            <div className="bg-secondary/30 p-4 rounded-lg">
+              <div className="text-2xl font-mono font-bold text-center">
+                {formatTime(clocks.black)}
+              </div>
+              {turn === "black" && !gameOver && (
+                <div className="text-center mt-2">
+                  <span className="text-xs text-success font-medium px-2 py-1 bg-success/10 rounded-full animate-pulse">
+                    Active Turn
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Game Board */}
+          <div className="flex flex-col items-center space-y-6 order-1 xl:order-2">
+            <div className="glass-card p-4 rounded-xl">
+              <div className="grid grid-cols-8 gap-1 p-2 bg-secondary/20 rounded-lg max-w-[min(90vw,480px)] aspect-square">
+                {board.map((row, r) =>
+                  row.map((cell, c) => (
                     <button
                       key={`${r}-${c}`}
-                      className={`${squareBg(r, c)} relative aspect-square rounded-sm border border-border focus:outline-none focus:ring-2 focus:ring-ring`}
+                      className={`aspect-square ${squareBg(r, c)} flex items-center justify-center transition-all duration-200 relative ${
+                        selected && selected.r === r && selected.c === c 
+                          ? "ring-4 ring-primary shadow-lg scale-105" 
+                          : "hover:scale-102"
+                      } focus:outline-none focus:ring-2 focus:ring-primary/50`}
                       onClick={() => tryMove(r, c)}
                     >
                       {cell && (
-                        <span
-                          className={`${pieceStyle(cell.color)} absolute inset-2 rounded-full shadow`}
-                          aria-label={`${cell.color} piece`}
-                        />
-                      )}
-                      {selected && selected.r === r && selected.c === c && (
-                        <span className="absolute inset-1 rounded-sm ring-2 ring-ring" />
+                        <div
+                          className={`w-[70%] h-[70%] rounded-full border-2 border-white/30 ${pieceStyle(cell.color)} ${
+                            cell.king ? "shadow-xl ring-2 ring-warning/50" : "shadow-md"
+                          } transition-all duration-200 hover:scale-110 flex items-center justify-center`}
+                        >
+                          {cell.king && (
+                            <span className="text-warning text-sm font-bold drop-shadow-sm">♔</span>
+                          )}
+                        </div>
                       )}
                     </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <aside className="w-full md:w-72 space-y-4">
-            <div className="rounded-lg border border-border p-4 bg-card/50">
-              <h2 className="font-semibold mb-2">Players</h2>
-              <ul className="text-sm space-y-1">
-                {players.map((id, idx) => (
-                  <li key={id} className="flex items-center justify-between">
-                    <span className={idx === 0 ? 'text-piece-black' : idx === 1 ? 'text-piece-red' : ''}>
-                      {idx === 0 ? 'Black' : idx === 1 ? 'Red' : 'Spectator'}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {id === me.id ? `${me.email} (You)` : (usernames[id] || id)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-lg border border-border p-4 bg-card/50">
-              <h2 className="font-semibold mb-2">Clocks (2 min per move)</h2>
-              <div className="flex items-center justify-between">
-                <span className={`text-sm ${turn === "black" ? "font-bold" : ""}`}>Black</span>
-                <span className="font-mono">{formatTime(clocks.black)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className={`text-sm ${turn === "red" ? "font-bold" : ""}`}>Red</span>
-                <span className="font-mono">{formatTime(clocks.red)}</span>
+                  ))
+                )}
               </div>
             </div>
-
-            {gameOver && (
-              <div className="rounded-lg border border-border p-4 bg-card/50">
-                <p className="font-semibold">{gameOver}</p>
+            
+            {gameOver ? (
+              <div className="text-center space-y-4 glass-card p-6 rounded-xl">
+                <h2 className="text-2xl font-bold text-primary">Game Over!</h2>
+                <p className="text-muted-foreground">{gameOver}</p>
+                <Button onClick={() => navigate('/')} className="kick-button">
+                  Return to Lobby
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={handleLeave} className="kick-button-secondary">
+                  Leave Game
+                </Button>
               </div>
             )}
-          </aside>
+          </div>
+
+          {/* Red Player Info */}
+          <div className={`glass-card p-6 rounded-xl border-2 transition-all duration-300 order-3 ${
+            turn === "red" && !gameOver ? 'border-accent shadow-lg shadow-accent/20' : 'border-border/50'
+          }`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-4 h-4 bg-piece-red rounded-full"></div>
+              <h3 className="font-bold text-lg text-piece-red">Red Player</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              {players[1] ? (players[1] === me.id ? `${me.email.split('@')[0]} (You)` : usernames[players[1]] || 'Player') : 'Waiting for player...'}
+            </p>
+            <div className="bg-secondary/30 p-4 rounded-lg">
+              <div className="text-2xl font-mono font-bold text-center">
+                {formatTime(clocks.red)}
+              </div>
+              {turn === "red" && !gameOver && (
+                <div className="text-center mt-2">
+                  <span className="text-xs text-success font-medium px-2 py-1 bg-success/10 rounded-full animate-pulse">
+                    Active Turn
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </section>
+
+        {/* Mobile-friendly game info */}
+        <div className="xl:hidden mt-6 max-w-md mx-auto">
+          <div className="glass-card p-4 rounded-xl">
+            <h3 className="font-semibold text-center mb-3">Game Info</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="text-center">
+                <p className="text-muted-foreground mb-1">Stake</p>
+                <p className="font-bold text-success">{stake}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-muted-foreground mb-1">Players</p>
+                <p className="font-bold">{players.length}/2</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

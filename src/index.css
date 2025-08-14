@@ -8,109 +8,111 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Kick.com inspired light theme (fallback) */
+    --background: 210 20% 98%;
+    --foreground: 224 71% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 71% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 224 71% 4%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 355 100% 97%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 9% 46%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 10% 15%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 142 76% 36%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Casino theme tokens */
-    --board-dark: 140 40% 20%;
-    --board-light: 140 35% 30%;
-    --piece-red: 0 75% 50%;
-    --piece-black: 0 0% 10%;
-    --casino-gold: 45 100% 50%;
-    --casino-green: 142 76% 36%;
-    --casino-red: 0 75% 50%;
-    --casino-purple: 260 100% 50%;
+    /* Professional gaming theme tokens */
+    --board-dark: 224 71% 12%;
+    --board-light: 224 47% 16%;
+    --piece-red: 0 84% 60%;
+    --piece-black: 220 9% 15%;
+    --kick-green: 142 76% 36%;
+    --kick-purple: 280 100% 70%;
+    --kick-gold: 45 93% 58%;
+    --accent-gradient: linear-gradient(135deg, hsl(142, 76%, 36%), hsl(280, 100%, 70%));
+    --success: 142 76% 36%;
+    --warning: 45 93% 58%;
+    --info: 217 91% 60%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Kick.com inspired dark theme - primary theme */
+    --background: 224 71% 4%;
+    --foreground: 210 20% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 224 47% 6%;
+    --card-foreground: 210 20% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 224 47% 6%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 355 100% 97%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 224 47% 8%;
+    --secondary-foreground: 210 20% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 224 47% 8%;
+    --muted-foreground: 215 16% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 280 100% 70%;
+    --accent-foreground: 355 100% 97%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 224 47% 10%;
+    --input: 224 47% 10%;
+    --ring: 142 76% 36%;
 
-    /* Casino theme tokens (dark) */
-    --board-dark: 140 40% 18%;
-    --board-light: 140 30% 28%;
-    --piece-red: 0 75% 50%;
-    --piece-black: 0 0% 12%;
-    --casino-gold: 45 100% 60%;
-    --casino-green: 142 76% 40%;
-    --casino-red: 0 75% 55%;
-    --casino-purple: 260 100% 60%;
+    --sidebar-background: 224 71% 4%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary-foreground: 355 100% 97%;
+    --sidebar-accent: 224 47% 8%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 224 47% 10%;
+    --sidebar-ring: 142 76% 36%;
+
+    /* Professional gaming theme tokens (dark) */
+    --board-dark: 224 71% 8%;
+    --board-light: 224 47% 12%;
+    --piece-red: 0 84% 65%;
+    --piece-black: 220 9% 85%;
+    --kick-green: 142 76% 40%;
+    --kick-purple: 280 100% 75%;
+    --kick-gold: 45 93% 65%;
+    --accent-gradient: linear-gradient(135deg, hsl(142, 76%, 40%), hsl(280, 100%, 75%));
+    --success: 142 76% 40%;
+    --warning: 45 93% 65%;
+    --info: 217 91% 65%;
   }
 }
 
@@ -131,12 +133,28 @@ All colors MUST be HSL.
   .bg-piece-black { background-color: hsl(var(--piece-black)); }
   .text-piece-red { color: hsl(var(--piece-red)); }
   .text-piece-black { color: hsl(var(--piece-black)); }
-  .text-casino-gold { color: hsl(var(--casino-gold)); }
-  .text-casino-green { color: hsl(var(--casino-green)); }
-  .text-casino-red { color: hsl(var(--casino-red)); }
-  .text-casino-purple { color: hsl(var(--casino-purple)); }
-  .bg-casino-gold { background-color: hsl(var(--casino-gold)); }
-  .bg-casino-green { background-color: hsl(var(--casino-green)); }
-  .bg-casino-red { background-color: hsl(var(--casino-red)); }
-  .bg-casino-purple { background-color: hsl(var(--casino-purple)); }
+  .text-kick-green { color: hsl(var(--kick-green)); }
+  .text-kick-purple { color: hsl(var(--kick-purple)); }
+  .text-kick-gold { color: hsl(var(--kick-gold)); }
+  .bg-kick-green { background-color: hsl(var(--kick-green)); }
+  .bg-kick-purple { background-color: hsl(var(--kick-purple)); }
+  .bg-kick-gold { background-color: hsl(var(--kick-gold)); }
+  .gradient-accent { background: var(--accent-gradient); }
+  .text-success { color: hsl(var(--success)); }
+  .text-warning { color: hsl(var(--warning)); }
+  .text-info { color: hsl(var(--info)); }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
+  }
+  
+  .kick-button {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-300 hover:scale-105 active:scale-95;
+  }
+  
+  .kick-button-secondary {
+    @apply bg-secondary/80 hover:bg-secondary text-secondary-foreground border border-border/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95;
+  }
 }

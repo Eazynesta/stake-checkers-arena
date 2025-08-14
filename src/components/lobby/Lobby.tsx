@@ -271,122 +271,223 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
   }
 
   return (
-    <section className="max-w-2xl w-full mx-auto space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lobby</h1>
-          <p className="text-muted-foreground">Signed in as {me.email}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/dashboard')}>Dashboard</Button>
-          {isAdmin && <Button variant="outline" onClick={() => navigate('/admin')}>Admin</Button>}
-          <Button variant="secondary" onClick={onLogout}>Logout</Button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Checkers Arena
+            </h1>
+            <p className="text-muted-foreground">Welcome, {me.email.split('@')[0]}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => navigate('/dashboard')} className="kick-button-secondary">
+              Dashboard
+            </Button>
+            {isAdmin && (
+              <Button variant="outline" onClick={() => navigate('/admin')} className="kick-button-secondary">
+                Admin
+              </Button>
+            )}
+            <Button onClick={onLogout} className="kick-button">
+              Logout
+            </Button>
+          </div>
+        </header>
 
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Match settings</h2>
-        <div className="rounded-md border border-border p-3 bg-card/50 flex items-center gap-3">
-          <label className="text-sm text-muted-foreground">Stake</label>
-          <Input type="number" min={1} step="0.01" value={stake} onChange={(e) => setStake(Number(e.currentTarget.value))} className="w-32" />
-          <span className="text-sm text-muted-foreground ml-auto">Balance: {balance.toFixed(2)}</span>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Invites</h2>
-        {receivedInvites.length === 0 && sentInvites.length === 0 ? (
-          <p className="text-muted-foreground">No invites at the moment.</p>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-3">
-            <div className="rounded-md border border-border overflow-hidden">
-              <div className="px-3 py-2 bg-card/50 font-medium">Received</div>
-              <ul className="divide-y divide-border">
-                {receivedInvites.map((inv) => (
-                  <li key={inv.gameId} className="p-3 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <p className="text-sm">From {inv.fromEmail}</p>
-                      <p className="text-xs text-muted-foreground">Stake: {inv.stake}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" onClick={() => acceptInvite(inv)}>Accept</Button>
-                      <Button size="sm" variant="outline" onClick={() => ignoreInvite(inv)}>Ignore</Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-md border border-border overflow-hidden">
-              <div className="px-3 py-2 bg-card/50 font-medium">Sent</div>
-              <ul className="divide-y divide-border">
-                {sentInvites.map((inv) => (
-                  <li key={inv.gameId} className="p-3 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <p className="text-sm">To {inv.to}</p>
-                      <p className="text-xs text-muted-foreground">Stake: {inv.stake}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">Pending</span>
-                  </li>
-                ))}
-              </ul>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Match Settings */}
+          <div className="glass-card p-6 rounded-xl">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-primary rounded-full"></span>
+              Match Settings
+            </h2>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium min-w-fit">Stake Amount</label>
+                <Input 
+                  type="number" 
+                  min={1} 
+                  step="0.01" 
+                  value={stake} 
+                  onChange={(e) => setStake(Number(e.currentTarget.value))} 
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex justify-between items-center p-3 bg-secondary/30 rounded-lg">
+                <span className="text-sm font-medium">Your Balance</span>
+                <span className="text-lg font-bold text-success">{balance.toFixed(2)}</span>
+              </div>
             </div>
           </div>
-        )}
-      </div>
 
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Leaderboard</h2>
-        <div className="rounded-md border border-border overflow-hidden">
-          <div className="px-3 py-2 bg-card/50 font-medium flex items-center justify-between">
-            <span>Top players</span>
-            {leadersLoading && <span className="text-xs text-muted-foreground">Refreshing…</span>}
+          {/* Game Invites */}
+          <div className="glass-card p-6 rounded-xl lg:col-span-2">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-accent rounded-full"></span>
+              Game Invites
+            </h2>
+            {receivedInvites.length === 0 && sentInvites.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-2">No active invites</p>
+                <p className="text-sm text-muted-foreground">Challenge a player to start a match!</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Received</h3>
+                  {receivedInvites.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4">No incoming invites</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {receivedInvites.map((inv) => (
+                        <div key={inv.gameId} className="p-4 bg-secondary/30 rounded-lg">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                              <p className="font-medium">{inv.fromEmail.split('@')[0]}</p>
+                              <p className="text-sm text-muted-foreground">Stake: {inv.stake}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => acceptInvite(inv)} className="kick-button">
+                                Accept
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => ignoreInvite(inv)}>
+                                Decline
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Sent</h3>
+                  {sentInvites.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4">No outgoing invites</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {sentInvites.map((inv) => (
+                        <div key={inv.gameId} className="p-4 bg-secondary/30 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">{inv.to}</p>
+                              <p className="text-sm text-muted-foreground">Stake: {inv.stake}</p>
+                            </div>
+                            <span className="text-xs text-warning font-medium px-2 py-1 bg-warning/10 rounded-full">
+                              Pending
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          {leaders.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-3">No data yet.</p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {leaders.map((p, idx) => {
-                const online = isOnline(p.user_id);
-                return (
-                  <li key={p.user_id} className="p-3 flex items-center justify-between bg-card/50">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground w-5">#{idx + 1}</span>
-                      <div>
-                        <p className="font-medium">{p.username || 'Player'}</p>
-                        <p className="text-xs text-muted-foreground">Wins: {p.games_won} · Earnings: {Number(p.earnings).toFixed(2)}</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {/* Leaderboard */}
+          <div className="glass-card p-6 rounded-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <span className="w-2 h-2 bg-warning rounded-full"></span>
+                Leaderboard
+              </h2>
+              {leadersLoading && (
+                <span className="text-xs text-muted-foreground animate-pulse">Refreshing…</span>
+              )}
+            </div>
+            {leaders.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No rankings yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Be the first to play!</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {leaders.map((p, idx) => {
+                  const online = isOnline(p.user_id);
+                  const isTopThree = idx < 3;
+                  const rankColors = ['text-warning', 'text-muted-foreground', 'text-accent'];
+                  return (
+                    <div 
+                      key={p.user_id} 
+                      className={`p-4 rounded-lg border transition-all duration-300 hover:scale-[1.02] ${
+                        isTopThree ? 'bg-primary/5 border-primary/20' : 'bg-secondary/30 border-border/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className={`text-lg font-bold w-8 ${isTopThree ? rankColors[idx] : 'text-muted-foreground'}`}>
+                            #{idx + 1}
+                          </span>
+                          <div>
+                            <p className="font-semibold">{p.username || 'Player'}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>Wins: {p.games_won}</span>
+                              <span>Earnings: {Number(p.earnings).toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <div className={`w-2 h-2 rounded-full ${online ? 'bg-success' : 'bg-muted-foreground/50'}`}></div>
+                            <span className="text-xs">{online ? 'Online' : 'Offline'}</span>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            onClick={() => inviteById(p.user_id)} 
+                            disabled={!online}
+                            className={online ? 'kick-button' : 'opacity-50'}
+                          >
+                            Challenge
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs ${online ? 'text-foreground' : 'text-muted-foreground'}`}>{online ? 'Online' : 'Offline'}</span>
-                      <Button size="sm" onClick={() => inviteById(p.user_id)} disabled={!online}>Invite</Button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Online Players */}
+          <div className="glass-card p-6 rounded-xl">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
+              Online Players
+            </h2>
+            {users.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Waiting for players...</p>
+                <p className="text-sm text-muted-foreground mt-1">You're the only one here right now</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {users.map((u) => (
+                  <div key={u.id} className="p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                        <div>
+                          <p className="font-medium">{u.email.split('@')[0]}</p>
+                          <p className="text-xs text-muted-foreground">Active now</p>
+                        </div>
+                      </div>
+                      <Button onClick={() => sendInvite(u)} className="kick-button">
+                        Challenge
+                      </Button>
                     </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      <div className="space-y-2">
-        <h2 className="text-lg font-semibold">Online players</h2>
-        {users.length === 0 ? (
-          <p className="text-muted-foreground">No other players online yet.</p>
-        ) : (
-          <ul className="divide-y divide-border rounded-md border border-border overflow-hidden">
-            {users.map((u) => (
-              <li key={u.id} className="flex items-center justify-between p-3 bg-card/50">
-                <div className="space-y-0.5">
-                  <p className="font-medium">{u.email}</p>
-                  <p className="text-xs text-muted-foreground">Online</p>
-                </div>
-                <Button onClick={() => sendInvite(u)}>Invite</Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
+    </div>
   );
 };
 
