@@ -153,16 +153,20 @@ export default function GameRoom() {
     const interval = setInterval(() => {
       setClocks((prev) => {
         const next = { ...prev };
-        if (turn === "black") next.black = Math.max(0, prev.black - 1);
-        else next.red = Math.max(0, prev.red - 1);
+        // Only count down the current player's time
+        if (turn === "black") {
+          next.black = Math.max(0, prev.black - 1);
+        } else if (turn === "red") {
+          next.red = Math.max(0, prev.red - 1);
+        }
 
         // Broadcast tick
         channelRef.current?.send({ type: "broadcast", event: "tick", payload: { clocks: next, turn } });
 
-        // End by time
-        if (next.black === 0 || next.red === 0) {
-          const loser = next.black === 0 ? "Black" : "Red";
-          const winnerId = next.black === 0 ? players[1] : players[0];
+        // End by time - only when current player's time runs out
+        if ((turn === "black" && next.black === 0) || (turn === "red" && next.red === 0)) {
+          const loser = turn === "black" ? "Black" : "Red";
+          const winnerId = turn === "black" ? players[1] : players[0];
           if (!endedRef.current && winnerId) {
             endedRef.current = true;
             channelRef.current?.send({ type: "broadcast", event: "game_over", payload: { gameId, winnerId, stake } });
@@ -338,14 +342,27 @@ export default function GameRoom() {
             <p className="text-sm text-muted-foreground mb-3">
               {players[0] ? (players[0] === me.id ? `${me.email.split('@')[0]} (You)` : usernames[players[0]] || 'Player') : 'Waiting for player...'}
             </p>
-            <div className="bg-secondary/30 p-4 rounded-lg">
-              <div className="text-2xl font-mono font-bold text-center">
+            <div className={`p-4 rounded-lg transition-all duration-300 ${
+              turn === "black" && !gameOver 
+                ? "bg-accent/20 border-2 border-accent/50" 
+                : "bg-secondary/30"
+            }`}>
+              <div className={`text-2xl font-mono font-bold text-center ${
+                turn === "black" && clocks.black <= 30 && clocks.black > 0 ? "text-warning animate-pulse" : ""
+              }`}>
                 {formatTime(clocks.black)}
               </div>
               {turn === "black" && !gameOver && (
                 <div className="text-center mt-2">
                   <span className="text-xs text-success font-medium px-2 py-1 bg-success/10 rounded-full animate-pulse">
-                    Active Turn
+                    Your Turn - Timer Running
+                  </span>
+                </div>
+              )}
+              {turn !== "black" && !gameOver && (
+                <div className="text-center mt-2">
+                  <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted/10 rounded-full">
+                    Waiting
                   </span>
                 </div>
               )}
@@ -412,14 +429,27 @@ export default function GameRoom() {
             <p className="text-sm text-muted-foreground mb-3">
               {players[1] ? (players[1] === me.id ? `${me.email.split('@')[0]} (You)` : usernames[players[1]] || 'Player') : 'Waiting for player...'}
             </p>
-            <div className="bg-secondary/30 p-4 rounded-lg">
-              <div className="text-2xl font-mono font-bold text-center">
+            <div className={`p-4 rounded-lg transition-all duration-300 ${
+              turn === "red" && !gameOver 
+                ? "bg-accent/20 border-2 border-accent/50" 
+                : "bg-secondary/30"
+            }`}>
+              <div className={`text-2xl font-mono font-bold text-center ${
+                turn === "red" && clocks.red <= 30 && clocks.red > 0 ? "text-warning animate-pulse" : ""
+              }`}>
                 {formatTime(clocks.red)}
               </div>
               {turn === "red" && !gameOver && (
                 <div className="text-center mt-2">
                   <span className="text-xs text-success font-medium px-2 py-1 bg-success/10 rounded-full animate-pulse">
-                    Active Turn
+                    Your Turn - Timer Running
+                  </span>
+                </div>
+              )}
+              {turn !== "red" && !gameOver && (
+                <div className="text-center mt-2">
+                  <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted/10 rounded-full">
+                    Waiting
                   </span>
                 </div>
               )}
