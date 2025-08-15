@@ -164,4 +164,25 @@ All colors MUST be HSL.
       linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px);
     background-size: 50px 50px;
   }
+
+  /* Checkers board responsive sizing */
+  .checkers-board {
+    min-width: 300px;
+    max-width: min(95vw, 900px);
+    width: 100%;
+    aspect-ratio: 1;
+  }
+
+  @media (max-width: 640px) {
+    .checkers-board {
+      min-width: 280px;
+      max-width: 95vw;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .checkers-board {
+      max-width: 800px;
+    }
+  }
 }

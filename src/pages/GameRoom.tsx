@@ -326,9 +326,9 @@ export default function GameRoom() {
           <p className="text-muted-foreground">Match ID: {gameId}</p>
         </header>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr,auto,1fr] gap-6 items-start max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-6 items-start max-w-7xl mx-auto">
           {/* Black Player Info */}
-          <div className={`glass-card p-6 rounded-xl border-2 transition-all duration-300 order-2 xl:order-1 ${
+          <div className={`glass-card p-6 rounded-xl border-2 transition-all duration-300 order-2 lg:order-1 ${
             turn === "black" && !gameOver ? 'border-accent shadow-lg shadow-accent/20' : 'border-border/50'
           }`}>
             <div className="flex items-center gap-3 mb-4">
@@ -353,9 +353,9 @@ export default function GameRoom() {
           </div>
 
           {/* Game Board */}
-          <div className="flex flex-col items-center space-y-6 order-1 xl:order-2">
+          <div className="flex flex-col items-center space-y-6 order-1 lg:order-2">
             <div className="glass-card p-4 rounded-xl">
-              <div className="grid grid-cols-8 gap-1 p-2 bg-secondary/20 rounded-lg max-w-[min(90vw,700px)] w-full aspect-square mx-auto">
+              <div className="grid grid-cols-8 gap-1 p-2 bg-secondary/20 rounded-lg checkers-board mx-auto">
                 {board.map((row, r) =>
                   row.map((cell, c) => (
                     <button
@@ -369,12 +369,12 @@ export default function GameRoom() {
                     >
                       {cell && (
                         <div
-                          className={`w-[70%] h-[70%] rounded-full border-2 border-white/30 ${pieceStyle(cell.color)} ${
+                          className={`w-[80%] h-[80%] rounded-full border-2 border-white/30 ${pieceStyle(cell.color)} ${
                             cell.king ? "shadow-xl ring-2 ring-warning/50" : "shadow-md"
                           } transition-all duration-200 hover:scale-110 flex items-center justify-center`}
                         >
                           {cell.king && (
-                            <span className="text-warning text-sm font-bold drop-shadow-sm">♔</span>
+                            <span className="text-warning text-lg font-bold drop-shadow-sm">♔</span>
                           )}
                         </div>
                       )}
@@ -428,7 +428,7 @@ export default function GameRoom() {
         </div>
 
         {/* Mobile-friendly game info */}
-        <div className="xl:hidden mt-6 max-w-md mx-auto">
+        <div className="lg:hidden mt-6 max-w-md mx-auto">
           <div className="glass-card p-4 rounded-xl">
             <h3 className="font-semibold text-center mb-3">Game Info</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">

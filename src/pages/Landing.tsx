@@ -1,10 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, Users, Clock, Trophy, Shield, DollarSign } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+
   useEffect(() => {
     document.title = "Checkers Arena - Play Online Checkers for Real Stakes";
     const description = "Join the ultimate online checkers platform. Play against real opponents with real stakes. Professional gaming experience with 2-minute timers and live tournaments.";
@@ -23,7 +28,24 @@ const Landing = () => {
       document.head.appendChild(canonical);
     }
     canonical.setAttribute("href", window.location.href);
-  }, []);
+
+    // Check authentication status and redirect if logged in
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
+      setSession(sess);
+      if (sess) {
+        navigate("/lobby", { replace: true });
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        navigate("/lobby", { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   return (
     <main className="min-h-screen bg-background">

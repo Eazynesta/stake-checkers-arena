@@ -43,13 +43,13 @@ export default function Auth() {
       // Only sync state and navigate outside of Supabase calls
       if (session) {
         // Defer navigation to avoid blocking callback
-        setTimeout(() => navigate("/", { replace: true }), 0);
+        setTimeout(() => navigate("/lobby", { replace: true }), 0);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/", { replace: true });
+        navigate("/lobby", { replace: true });
       }
     });
 
@@ -69,7 +69,7 @@ export default function Auth() {
       return;
     }
     toast.success("Signed in successfully");
-    navigate("/", { replace: true });
+    navigate("/lobby", { replace: true });
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
