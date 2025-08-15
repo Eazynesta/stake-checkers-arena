@@ -165,7 +165,7 @@ export default function GameRoom() {
 
         // End by time - only when current player's time runs out
         if ((turn === "black" && next.black === 0) || (turn === "red" && next.red === 0)) {
-          const loser = turn === "black" ? "Black" : "Red";
+          const loser = turn === "black" ? "Brown" : "Red";
           const winnerId = turn === "black" ? players[1] : players[0];
           if (!endedRef.current && winnerId) {
             endedRef.current = true;
@@ -255,7 +255,7 @@ export default function GameRoom() {
       const oppHasPieces = nextBoard.some((row) => row.some((cell) => cell?.color === nextTurn));
       if (!oppHasPieces) {
         const winnerColor = turn; // the player who just moved
-        const winnerLabel = winnerColor === "black" ? "Black" : "Red";
+        const winnerLabel = winnerColor === "black" ? "Brown" : "Red";
         const winnerId = winnerColor === "black" ? players[0] : players[1];
         if (!endedRef.current && winnerId) {
           endedRef.current = true;
@@ -316,7 +316,7 @@ export default function GameRoom() {
   };
 
   const squareBg = (r: number, c: number) => {
-    return (r + c) % 2 === 0 ? "bg-board-light hover:bg-board-light/80" : "bg-board-dark hover:bg-board-dark/80";
+    return (r + c) % 2 === 0 ? "bg-board-light hover:bg-board-light/80 shadow-sm" : "bg-board-dark hover:bg-board-dark/80 shadow-sm";
   };
   const pieceStyle = (color: Color) => (color === "black" ? "bg-piece-black" : "bg-piece-red");
 
@@ -337,7 +337,7 @@ export default function GameRoom() {
           }`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-4 h-4 bg-piece-black rounded-full border border-white/50"></div>
-              <h3 className="font-bold text-lg text-piece-black">Black Player</h3>
+              <h3 className="font-bold text-lg text-piece-black">Brown Player</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-3">
               {players[0] ? (players[0] === me.id ? `${me.email.split('@')[0]} (You)` : usernames[players[0]] || 'Player') : 'Waiting for player...'}
@@ -386,7 +386,7 @@ export default function GameRoom() {
                     >
                       {cell && (
                         <div
-                          className={`w-[80%] h-[80%] rounded-full border-2 border-white/30 ${pieceStyle(cell.color)} ${
+                          className={`w-[80%] h-[80%] rounded-full border-2 border-white/50 shadow-lg ${pieceStyle(cell.color)} ${
                             cell.king ? "shadow-xl ring-2 ring-warning/50" : "shadow-md"
                           } transition-all duration-200 hover:scale-110 flex items-center justify-center`}
                         >
