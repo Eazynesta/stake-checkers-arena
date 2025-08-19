@@ -151,8 +151,8 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-background px-4 py-8">
-      <section className="max-w-3xl mx-auto space-y-6">
-        <header className="flex items-center justify-between">
+      <section className="w-full max-w-3xl mx-auto space-y-6">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Player Dashboard</h1>
             <p className="text-muted-foreground">Signed in as {me.email}</p>
@@ -162,7 +162,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <section className="grid md:grid-cols-2 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <article className="rounded-lg border border-border p-4 bg-card/50 space-y-3">
             <h2 className="font-semibold">Profile</h2>
             <div className="space-y-4">
@@ -186,12 +186,12 @@ export default function Dashboard() {
             <h2 className="font-semibold text-casino-gold">💰 M-Pesa Wallet</h2>
             <p className="text-lg font-bold text-casino-gold">Balance: KSh {balance.toFixed(2)}</p>
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Input 
                   type="number" 
                   min={1} 
                   step="1" 
-                  className="w-32" 
+                  className="w-28 sm:w-32" 
                   value={amount} 
                   onChange={(e) => setAmount(Number(e.currentTarget.value))}
                   placeholder="Amount"
@@ -220,7 +220,7 @@ export default function Dashboard() {
 
           <article className="md:col-span-2 rounded-lg border border-border p-4 bg-card/50 space-y-3">
             <h2 className="font-semibold">Statistics</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="rounded-md border border-border p-3">
                 <p className="text-xs text-muted-foreground">Games Won</p>
                 <p className="text-xl font-semibold">{gamesWon}</p>

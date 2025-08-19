@@ -418,20 +418,20 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
                         isTopThree ? 'bg-primary/5 border-primary/20' : 'bg-secondary/30 border-border/50'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
                           <span className={`text-lg font-bold w-8 ${isTopThree ? rankColors[idx] : 'text-muted-foreground'}`}>
                             #{idx + 1}
                           </span>
-                          <div>
-                            <p className="font-semibold">{p.username || 'Player'}</p>
+                          <div className="min-w-0">
+                            <p className="font-semibold truncate max-w-[70vw] sm:max-w-[40vw]">{p.username || 'Player'}</p>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
                               <span>Wins: {p.games_won}</span>
                               <span>Earnings: {Number(p.earnings).toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
                           <div className="flex items-center gap-1">
                             <div className={`w-2 h-2 rounded-full ${online ? 'bg-success' : 'bg-muted-foreground/50'}`}></div>
                             <span className="text-xs">{online ? 'Online' : 'Offline'}</span>
@@ -440,7 +440,7 @@ const Lobby = ({ session, onLogout }: LobbyProps) => {
                             size="sm" 
                             onClick={() => inviteById(p.user_id)} 
                             disabled={!online}
-                            className={online ? 'kick-button' : 'opacity-50'}
+                            className={`${online ? 'kick-button' : 'opacity-50'} shrink-0`}
                           >
                             Challenge
                           </Button>
