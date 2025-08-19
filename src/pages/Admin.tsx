@@ -64,10 +64,11 @@ export default function Admin() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [{ data: s }, { data: l }, { data: u }] = await Promise.all([
+      const [{ data: s }, { data: l }, { data: u }, { data: ua }] = await Promise.all([
         (supabase as any).rpc("get_earnings_summary"),
         (supabase as any).rpc("get_top_players", { limit_count: 10 }),
         (supabase as any).rpc("get_total_users"),
+        (supabase as any).rpc("get_total_auth_users"),
       ]);
       if (!active) return;
       if (Array.isArray(s)) {
@@ -76,9 +77,11 @@ export default function Admin() {
         setSummary(map);
       }
       setLeaders(Array.isArray(l) ? (l as TopPlayer[]) : []);
-      if (u !== null && u !== undefined) {
-        const value = typeof u === "number" ? u : Number(u);
-        if (!Number.isNaN(value)) setTotalUsers(value);
+      // Prefer profiles count; fallback to auth.users count
+      const candidates = [u, ua].filter((x) => x !== null && x !== undefined);
+      for (const c of candidates) {
+        const value = typeof c === "number" ? c : Number(c);
+        if (!Number.isNaN(value) && value > 0) { setTotalUsers(value); break; }
       }
     })();
     const interval = setInterval(() => {
