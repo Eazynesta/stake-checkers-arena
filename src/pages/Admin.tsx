@@ -76,7 +76,10 @@ export default function Admin() {
         setSummary(map);
       }
       setLeaders(Array.isArray(l) ? (l as TopPlayer[]) : []);
-      if (typeof u === "number") setTotalUsers(Number(u));
+      if (u !== null && u !== undefined) {
+        const value = typeof u === "number" ? u : Number(u);
+        if (!Number.isNaN(value)) setTotalUsers(value);
+      }
     })();
     const interval = setInterval(() => {
       (supabase as any).rpc("get_earnings_summary").then(({ data }: any) => {
