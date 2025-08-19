@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { useNavigate } from "react-router-dom";
+import AppLayout from "@/components/layout/AppLayout";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -150,19 +151,10 @@ export default function Dashboard() {
   if (!session) return null;
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8">
-      <section className="w-full max-w-3xl mx-auto space-y-6">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Player Dashboard</h1>
-            <p className="text-muted-foreground">Signed in as {me.email}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate('/')}>Back to Lobby</Button>
-          </div>
-        </header>
-
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <AppLayout title="Dashboard">
+      <div className="px-4 py-6">
+        <div className="w-full max-w-3xl mx-auto space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <article className="rounded-lg border border-border p-4 bg-card/50 space-y-3">
             <h2 className="font-semibold">Profile</h2>
             <div className="space-y-4">
@@ -239,8 +231,9 @@ export default function Dashboard() {
               </div>
             </div>
           </article>
-        </section>
-      </section>
-    </main>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 }

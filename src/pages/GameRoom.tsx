@@ -4,6 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
+import AppLayout from "@/components/layout/AppLayout";
 
 type Color = "black" | "red";
 
@@ -321,15 +322,8 @@ export default function GameRoom() {
   const pieceStyle = (color: Color) => (color === "black" ? "bg-piece-black" : "bg-piece-red");
 
   return (
-    <main className="min-h-screen bg-background">
+    <AppLayout title={`Game ${gameId || ''}`}>
       <div className="container mx-auto px-4 py-6">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
-            Checkers Arena
-          </h1>
-          <p className="text-muted-foreground">Match ID: {gameId}</p>
-        </header>
-
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr] gap-6 items-start max-w-7xl mx-auto">
           {/* Black Player Info */}
           <div className={`glass-card p-6 rounded-xl border-2 transition-all duration-300 order-2 lg:order-1 ${
@@ -474,7 +468,7 @@ export default function GameRoom() {
           </div>
         </div>
       </div>
-    </main>
+    </AppLayout>
   );
 }
 
