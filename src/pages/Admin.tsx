@@ -18,6 +18,7 @@ export default function Admin() {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(0);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
   const [summary, setSummary] = useState<Record<string, number>>({ day: 0, week: 0, month: 0 });
   const [leaders, setLeaders] = useState<TopPlayer[]>([]);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -63,9 +64,10 @@ export default function Admin() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const [{ data: s }, { data: l }] = await Promise.all([
+      const [{ data: s }, { data: l }, { data: u }] = await Promise.all([
         (supabase as any).rpc("get_earnings_summary"),
         (supabase as any).rpc("get_top_players", { limit_count: 10 }),
+        (supabase as any).rpc("get_total_users"),
       ]);
       if (!active) return;
       if (Array.isArray(s)) {
@@ -74,6 +76,7 @@ export default function Admin() {
         setSummary(map);
       }
       setLeaders(Array.isArray(l) ? (l as TopPlayer[]) : []);
+      if (typeof u === "number") setTotalUsers(Number(u));
     })();
     const interval = setInterval(() => {
       (supabase as any).rpc("get_earnings_summary").then(({ data }: any) => {
@@ -103,10 +106,14 @@ export default function Admin() {
           </div>
         </header>
 
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <article className="rounded-lg border border-border bg-card/50 p-4">
             <h2 className="text-sm text-muted-foreground">Live users</h2>
             <p className="text-3xl font-semibold mt-1">{onlineCount}</p>
+          </article>
+          <article className="rounded-lg border border-border bg-card/50 p-4">
+            <h2 className="text-sm text-muted-foreground">Registered users</h2>
+            <p className="text-3xl font-semibold mt-1">{totalUsers}</p>
           </article>
           <article className="rounded-lg border border-border bg-card/50 p-4">
             <h2 className="text-sm text-muted-foreground">Earnings (day)</h2>
