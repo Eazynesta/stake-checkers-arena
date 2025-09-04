@@ -51,7 +51,10 @@ export default function GameRoom() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const endedRef = useRef(false);
 
-  const me = useMemo(() => ({ id: session?.user.id ?? "", email: session?.user.email ?? "" }), [session]);
+  const me = useMemo(() => ({ 
+    id: session?.user.id ?? "", 
+    email: session?.user.email ?? "" 
+  }), [session?.user.id, session?.user.email]);
 
   // SEO basics
   useEffect(() => {
@@ -102,35 +105,58 @@ export default function GameRoom() {
     }
     
     console.log('Setting up channel for game:', gameId, 'user:', me.id);
+    
+    // Clean up any existing channel first
+    if (channelRef.current) {
+      console.log('Cleaning up existing channel');
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    
     const channel = supabase.channel(`game-${gameId}`, { 
       config: { 
         presence: { key: me.id },
-        broadcast: { self: true }
+        broadcast: { self: false, ack: true }
       } 
     });
     channelRef.current = channel;
 
+    const handlePresenceSync = () => {
+      const state = channel.presenceState();
+      const ids = Object.keys(state).sort();
+      console.log('Presence sync - raw state:', state);
+      console.log('Presence sync - player IDs:', ids);
+      console.log('My ID:', me.id, 'Am I in list?', ids.includes(me.id));
+      
+      setPlayers(ids);
+      
+      if (ids.length >= 2) {
+        const myIdx = ids.indexOf(me.id);
+        const color = myIdx === 0 ? "black" : myIdx === 1 ? "red" : null;
+        console.log('Setting my color:', color, 'index:', myIdx, 'total players:', ids.length);
+        setMyColor(color);
+      } else {
+        console.log('Not enough players yet:', ids.length, 'need 2');
+        setMyColor(null);
+      }
+    };
+
+    const handlePresenceJoin = ({ key, newPresences }) => {
+      console.log('Player joined:', key, 'presences:', newPresences);
+      // Trigger a manual sync to update state immediately
+      setTimeout(handlePresenceSync, 100);
+    };
+
+    const handlePresenceLeave = ({ key, leftPresences }) => {
+      console.log('Player left:', key, 'presences:', leftPresences);
+      // Trigger a manual sync to update state immediately
+      setTimeout(handlePresenceSync, 100);
+    };
+
     channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState() as Record<string, Array<{ email: string }>>;
-        const ids = Object.keys(state).sort();
-        console.log('Presence sync - players:', ids);
-        setPlayers(ids);
-        if (ids.length >= 2) {
-          const myIdx = ids.indexOf(me.id);
-          const color = myIdx === 0 ? "black" : myIdx === 1 ? "red" : null;
-          console.log('Setting my color:', color, 'index:', myIdx);
-          setMyColor(color);
-        } else {
-          console.log('Not enough players yet:', ids.length);
-        }
-      })
-      .on("presence", { event: "join" }, ({ key, newPresences }) => {
-        console.log('Player joined:', key, newPresences);
-      })
-      .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-        console.log('Player left:', key, leftPresences);
-      })
+      .on("presence", { event: "sync" }, handlePresenceSync)
+      .on("presence", { event: "join" }, handlePresenceJoin)
+      .on("presence", { event: "leave" }, handlePresenceLeave)
       .on("broadcast", { event: "move" }, ({ payload }) => {
         const { board, turn, clocks } = payload as { board: Board; turn: Color; clocks: { black: number; red: number } };
         setBoard(board);
@@ -149,20 +175,46 @@ export default function GameRoom() {
       .subscribe(async (status) => {
         console.log('Channel subscription status:', status);
         if (status === "SUBSCRIBED") {
-          console.log('Channel subscribed, tracking presence for:', me.email);
-          const trackResult = await channel.track({ 
+          console.log('Channel subscribed, tracking presence for:', me.email, 'user ID:', me.id);
+          
+          // Wait a bit for the subscription to be fully established
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const presenceData = { 
             email: me.email, 
             userId: me.id,
-            joinedAt: new Date().toISOString()
-          });
+            joinedAt: new Date().toISOString(),
+            gameId: gameId
+          };
+          
+          console.log('Tracking presence with data:', presenceData);
+          const trackResult = await channel.track(presenceData);
           console.log('Track result:', trackResult);
+          
+          // Force a presence sync after tracking
+          setTimeout(() => {
+            console.log('Forcing presence sync check...');
+            const currentState = channel.presenceState();
+            console.log('Current presence state after tracking:', currentState);
+          }, 1000);
+        } else if (status === "CHANNEL_ERROR") {
+          console.error('Channel subscription error');
+        } else if (status === "TIMED_OUT") {
+          console.error('Channel subscription timed out');
         }
       });
 
     return () => {
-      console.log('Cleaning up channel');
+      console.log('Cleaning up channel for game:', gameId);
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        const currentChannel = channelRef.current;
+        console.log('Untracking presence before cleanup');
+        currentChannel.untrack().then(() => {
+          console.log('Successfully untracked presence');
+        }).catch((err) => {
+          console.error('Error untracking presence:', err);
+        });
+        supabase.removeChannel(currentChannel);
         channelRef.current = null;
       }
     };
