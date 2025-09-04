@@ -75,30 +75,61 @@ export default function GameRoom() {
 
   // Auth session
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, sess) => setSession(sess));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, sess) => {
+      console.log('Auth state changed:', sess ? 'logged in' : 'logged out');
+      setSession(sess);
+    });
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session ? 'found' : 'not found');
       setSession(session);
-      if (!session) navigate("/auth", { replace: true });
+      if (!session) {
+        console.log('No session found, redirecting to auth');
+        navigate("/auth", { replace: true });
+      }
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
 
   // Setup channel
   useEffect(() => {
-    if (!gameId || !me.id) return;
-    const channel = supabase.channel(`game-${gameId}`, { config: { presence: { key: me.id } } });
+    if (!gameId) {
+      console.log('No gameId, skipping channel setup');
+      return;
+    }
+    if (!me.id) {
+      console.log('No user id, skipping channel setup');
+      return;
+    }
+    
+    console.log('Setting up channel for game:', gameId, 'user:', me.id);
+    const channel = supabase.channel(`game-${gameId}`, { 
+      config: { 
+        presence: { key: me.id },
+        broadcast: { self: true }
+      } 
+    });
     channelRef.current = channel;
 
     channel
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState() as Record<string, Array<{ email: string }>>;
         const ids = Object.keys(state).sort();
+        console.log('Presence sync - players:', ids);
         setPlayers(ids);
         if (ids.length >= 2) {
           const myIdx = ids.indexOf(me.id);
-          // player[0] => black, player[1] => red
-          setMyColor(myIdx === 0 ? "black" : myIdx === 1 ? "red" : null);
+          const color = myIdx === 0 ? "black" : myIdx === 1 ? "red" : null;
+          console.log('Setting my color:', color, 'index:', myIdx);
+          setMyColor(color);
+        } else {
+          console.log('Not enough players yet:', ids.length);
         }
+      })
+      .on("presence", { event: "join" }, ({ key, newPresences }) => {
+        console.log('Player joined:', key, newPresences);
+      })
+      .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+        console.log('Player left:', key, leftPresences);
       })
       .on("broadcast", { event: "move" }, ({ payload }) => {
         const { board, turn, clocks } = payload as { board: Board; turn: Color; clocks: { black: number; red: number } };
@@ -116,18 +147,26 @@ export default function GameRoom() {
         handleGameOver(winnerId, s);
       })
       .subscribe(async (status) => {
+        console.log('Channel subscription status:', status);
         if (status === "SUBSCRIBED") {
-          await channel.track({ email: me.email });
+          console.log('Channel subscribed, tracking presence for:', me.email);
+          const trackResult = await channel.track({ 
+            email: me.email, 
+            userId: me.id,
+            joinedAt: new Date().toISOString()
+          });
+          console.log('Track result:', trackResult);
         }
       });
 
     return () => {
+      console.log('Cleaning up channel');
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [gameId, me]);
+  }, [gameId, me.id, me.email]);
 
   // Fetch usernames for players list
   useEffect(() => {
