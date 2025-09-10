@@ -128,16 +128,39 @@ export default function GameRoom() {
       console.log('Presence sync - player IDs:', ids);
       console.log('My ID:', me.id, 'Am I in list?', ids.includes(me.id));
       
-      setPlayers(ids);
+      // Force state update by creating new array
+      setPlayers([...ids]);
       
       if (ids.length >= 2) {
         const myIdx = ids.indexOf(me.id);
         const color = myIdx === 0 ? "black" : myIdx === 1 ? "red" : null;
         console.log('Setting my color:', color, 'index:', myIdx, 'total players:', ids.length);
         setMyColor(color);
+        
+        // Broadcast player join event to ensure all clients are notified
+        channel.send({
+          type: 'broadcast',
+          event: 'player_update',
+          payload: { 
+            players: ids, 
+            gameReady: true,
+            timestamp: Date.now()
+          }
+        });
       } else {
         console.log('Not enough players yet:', ids.length, 'need 2');
         setMyColor(null);
+        
+        // Broadcast waiting state
+        channel.send({
+          type: 'broadcast',
+          event: 'player_update',
+          payload: { 
+            players: ids, 
+            gameReady: false,
+            timestamp: Date.now()
+          }
+        });
       }
     };
 
@@ -171,6 +194,27 @@ export default function GameRoom() {
       .on("broadcast", { event: "game_over" }, ({ payload }) => {
         const { winnerId, stake: s } = payload as { winnerId: string; stake: number };
         handleGameOver(winnerId, s);
+      })
+      .on("broadcast", { event: "player_update" }, ({ payload }) => {
+        const { players: updatedPlayers, gameReady, timestamp } = payload as { 
+          players: string[]; 
+          gameReady: boolean; 
+          timestamp: number; 
+        };
+        console.log('Received player update broadcast:', updatedPlayers, 'gameReady:', gameReady);
+        
+        // Force update players state
+        setPlayers([...updatedPlayers]);
+        
+        // Update my color if game is ready
+        if (gameReady && updatedPlayers.length >= 2) {
+          const myIdx = updatedPlayers.indexOf(me.id);
+          const color = myIdx === 0 ? "black" : myIdx === 1 ? "red" : null;
+          console.log('Updating my color from broadcast:', color, 'index:', myIdx);
+          setMyColor(color);
+        } else if (!gameReady) {
+          setMyColor(null);
+        }
       })
       .subscribe(async (status) => {
         console.log('Channel subscription status:', status);
